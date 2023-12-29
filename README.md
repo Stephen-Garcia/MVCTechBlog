@@ -20,7 +20,7 @@ This application is covered by the Open license.
 ## Contribution-Guidelines
 Open an issue from the issues tab at the repository homepage to report problems.
 ## Video/Images
-
+![MVCTechBlog](https://github.com/Stephen-Garcia/MVCTechBlog/assets/92559337/3c098a6d-4f1c-459a-8084-25694bdefaa5)
 ## Links
 https://mvc-tech-blog14-caedc908fe9b.herokuapp.com/
 ## Questions
