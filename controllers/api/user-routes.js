@@ -1,51 +1,64 @@
 const router = require('express').Router();
-const { Post } = require('../../models/');
-const withAuth = require('../../utils/auth');
+const { User } = require('../../models');
 
-router.post('/', withAuth, async (req, res) => {
-  const body = req.body;
-
+router.post('/', async (req, res) => {
   try {
-    const newPost = await Post.create({ ...body, userId: req.session.userId });
-    res.json(newPost);
+    const newUser = await User.create({
+      username: req.body.username,
+      password: req.body.password,
+    });
+
+    req.session.save(() => {
+      req.session.userId = newUser.id;
+      req.session.username = newUser.username;
+      req.session.loggedIn = true;
+
+      res.json(newUser);
+    });
   } catch (err) {
     res.status(500).json(err);
   }
 });
 
-router.put('/:id', withAuth, async (req, res) => {
+router.post('/login', async (req, res) => {
   try {
-    const [affectedRows] = await Post.update(req.body, {
+    const user = await User.findOne({
       where: {
-        id: req.params.id,
+        username: req.body.username,
       },
     });
 
-    if (affectedRows > 0) {
-      res.status(200).end();
-    } else {
-      res.status(404).end();
+    if (!user) {
+      res.status(400).json({ message: 'No user account found!' });
+      return;
     }
+
+    const validPassword = user.checkPassword(req.body.password);
+
+    if (!validPassword) {
+      res.status(400).json({ message: 'No user account found!' });
+      return;
+    }
+
+    req.session.save(() => {
+      req.session.userId = user.id;
+      req.session.username = user.username;
+      req.session.loggedIn = true;
+
+      res.json({ user, message: 'You are now logged in!' });
+    });
   } catch (err) {
-    res.status(500).json(err);
+    res.status(400).json({ message: 'No user account found!' });
   }
 });
 
-router.delete('/:id', withAuth, async (req, res) => {
-  try {
-    const [affectedRows] = Post.destroy({
-      where: {
-        id: req.params.id,
-      },
+router.post('/logout', (req, res) => {
+  if (req.session.loggedIn) {
+    req.session.destroy(() => {
+      res.status(204).end();
     });
-
-    if (affectedRows > 0) {
-      res.status(200).end();
-    } else {
-      res.status(404).end();
-    }
-  } catch (err) {
-    res.status(500).json(err);
+  } else {
+    res.status(404).end();
   }
 });
 
